@@ -51,4 +51,4 @@
       args:
         executable: /bin/bash
       register: noOwner
-      changed_when: "noOwner.stdout != ''"
+      changed_when: "noOwner.stdout != 'Check for files with no owner'"
