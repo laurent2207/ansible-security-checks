@@ -1,7 +1,7 @@
 # ansible-security-checks
 
 Yaml file to be used with Ansible, for multiple hosts simultaniously. 
-Includes some basic linux commands to do some security checks:
+Includes some basic Linux commands to do some security(-related) checks:
 
 - Check if there are no users with an empty passwd
 - Make sure non-root accounts do not have an uid of 0
