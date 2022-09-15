@@ -1,0 +1,54 @@
+---
+
+- hosts: all
+  become: yes
+  tasks:
+    - name: Check if there are no users with an empty passwd
+      shell: 
+        cmd: cat /etc/shadow | awk -F{{ ":" }} '($2==""){print $1}'
+      args:
+        executable: /bin/bash
+      register: emptyPasswd
+      changed_when: "emptyPasswd.stdout != ''" 
+    - name: Make sure non-root accounts do not have an uid of 0
+      shell: 
+        cmd: cat /etc/passwd | awk -F{{ ":" }} '($3=="0") {print}' 
+      args:
+        executable: /bin/bash
+      register: noUidZero
+      changed_when: "noUidZero.stdout != 'root:x:0:0:root:/root:/bin/bash'"
+    - name: Make sure non-root accounts do not have an gid of 0
+      shell: 
+        cmd: cat /etc/passwd | awk -F{{ ":" }} '($4=="0") {print}' 
+      args:
+        executable: /bin/bash
+      register: noGidZero
+      changed_when: "noGidZero.stdout != 'root:x:0:0:root:/root:/bin/bash'"
+    - name: Verify ownership of /etc/shadow, /etc/passwd, /etc/group, /etc/fstab
+      shell: 
+        cmd: ls -l /etc/fstab /etc/passwd /etc/shadow /etc/group | awk '{ print $3,$4,$9 }'
+      args:
+        executable: /bin/bash
+      register: ownership
+      changed_when: "ownership.stdout != 'root root /etc/fstab\nroot root /etc/group\nroot root /etc/passwd\nroot shadow /etc/shadow'"
+    - name: Verify permissions of /etc/shadow, /etc/passwd, /etc/group, /etc/fstab
+      shell: 
+        cmd: ls -l /etc/fstab /etc/passwd /etc/shadow /etc/group | awk '{ print $1,$9 }'
+      args:
+        executable: /bin/bash
+      register: permissions
+      changed_when: "permissions.stdout != '-rw-r--r-- /etc/fstab\n-rw-r--r-- /etc/group\n-rw-r--r-- /etc/passwd\n-rw-r----- /etc/shadow'"
+    - name: Check for world writable directories
+      shell: 
+        cmd: find / -xdev -type d \( -perm -0002 -a ! -perm -1000 \) -print
+      args:
+        executable: /bin/bash
+      register: worldWritable
+      changed_when: "worldWritable.stdout != ''"
+    - name: Check for files with no owner
+      shell: 
+        cmd: find / -xdev \( -nouser -o -nogroup \) -print
+      args:
+        executable: /bin/bash
+      register: noOwner
+      changed_when: "noOwner.stdout != ''"
